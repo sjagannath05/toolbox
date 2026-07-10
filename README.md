@@ -6,7 +6,7 @@ Tools I've built — binaries downloadable here. Some sources are private; where
 
 | Tool | What it is | Platforms | Latest | Source |
 |------|-----------|-----------|--------|--------|
-| [DiffDesk](./diffdesk/) | Desktop diff tool with smart parsing of CLI table output (`docker ps`, `kubectl get`, …) | macOS · Windows · Linux | <!-- latest:diffdesk -->–<!-- /latest:diffdesk --> | private |
+| [DiffDesk](./diffdesk/) | Desktop diff tool with smart parsing of CLI table output (`docker ps`, `kubectl get`, …) | macOS · Windows · Linux | <!-- latest:diffdesk -->[v0.7.0](https://github.com/sjagannath05/toolbox/releases/tag/diffdesk-v0.7.0)<!-- /latest:diffdesk --> | private |
 | [etcdctl-webui](./etcdctl-webui/) | Single-binary web UI for etcd v3 — multi-cluster, mTLS | macOS · Linux · Docker | <!-- latest:etcdctl-webui -->–<!-- /latest:etcdctl-webui --> | [public](https://github.com/sjagannath05/etcdctl-webui) |
 | [sdm-tools](./sdm-tools/) | Dual-pane file browser/copier for StrongDM hosts (TUI + GUI) | macOS · Linux | <!-- latest:sdm-tools -->–<!-- /latest:sdm-tools --> | private |
 
