@@ -1,16 +1,17 @@
-# Template: drop this job into a PRIVATE project repo's release workflow to
-# publish its binaries into the public sjagannath05/toolbox repo.
+# Template: drop this into a PRIVATE project repo's .github/workflows/ to
+# publish its release binaries into the public sjagannath05/toolbox repo.
+#
+# Auth: GitHub App "toolbox-publisher" (App ID 4264029) — mints a fresh
+# 1-hour token per run; nothing to rotate. Validated end-to-end 2026-07-10.
 #
 # Setup (once per private repo):
-#   1. Create a fine-grained PAT: GitHub → Settings → Developer settings →
-#      Fine-grained tokens. Repository access: ONLY sjagannath05/toolbox.
-#      Permissions: Contents = Read and write. 1-year expiry.
-#   2. In the private repo: Settings → Secrets → Actions → new secret
-#      TOOLBOX_TOKEN = that PAT.
-#   3. Set TOOL_NAME below (must match the folder name in toolbox).
+#   Settings → Secrets and variables → Actions → New repository secret:
+#     TOOLBOX_APP_ID          = 4264029
+#     TOOLBOX_APP_PRIVATE_KEY = full contents of the app's .pem file
+#   Then set TOOL_NAME below (must match the folder name in toolbox).
 #
 # Tagging convention in the private repo: plain v0.7.0 tags.
-# The job re-publishes to toolbox as <tool>-v0.7.0.
+# This job re-publishes to toolbox as <tool>-v0.7.0.
 
 name: Publish to toolbox
 
@@ -30,6 +31,15 @@ jobs:
   publish-to-toolbox:
     runs-on: ubuntu-latest
     steps:
+      - name: Mint toolbox token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.TOOLBOX_APP_ID }}
+          private-key: ${{ secrets.TOOLBOX_APP_PRIVATE_KEY }}
+          owner: sjagannath05
+          repositories: toolbox
+
       - name: Resolve tag
         id: tag
         run: |
@@ -51,7 +61,7 @@ jobs:
 
       - name: Publish to sjagannath05/toolbox
         env:
-          GH_TOKEN: ${{ secrets.TOOLBOX_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh release create "${{ steps.tag.outputs.public_tag }}" \
             --repo sjagannath05/toolbox \
