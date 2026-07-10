@@ -6,6 +6,11 @@ name: Update index
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to index (e.g. diffdesk-v0.7.0)"
+        required: true
 
 permissions:
   contents: write
@@ -15,12 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main   # release events check out the tag (detached HEAD); we need the branch
 
       - name: Update Latest column
         run: |
-          TAG="${{ github.event.release.tag_name }}"        # e.g. diffdesk-v0.7.0
-          TOOL="${TAG%-v*}"                                  # diffdesk
-          VERSION="v${TAG##*-v}"                             # v0.7.0
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"  # e.g. diffdesk-v0.7.0
+          TOOL="${TAG%-v*}"                                          # diffdesk
+          VERSION="v${TAG##*-v}"                                     # v0.7.0
           URL="https://github.com/${{ github.repository }}/releases/tag/${TAG}"
           # Replace content between the per-tool markers in README.md
           perl -0pi -e \
@@ -32,5 +39,5 @@ jobs:
           git config user.name "toolbox-bot"
           git config user.email "actions@github.com"
           git add README.md
-          git diff --cached --quiet || git commit -m "index: ${{ github.event.release.tag_name }}"
-          git push
+          git diff --cached --quiet || git commit -m "index: ${{ github.event.release.tag_name || inputs.tag }}"
+          git push origin main
