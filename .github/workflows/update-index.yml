@@ -1,0 +1,36 @@
+# Keeps the "Latest" column in the root README in sync.
+# Fires whenever a release (tagged <tool>-v<version>) is published on this repo.
+
+name: Update index
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Latest column
+        run: |
+          TAG="${{ github.event.release.tag_name }}"        # e.g. diffdesk-v0.7.0
+          TOOL="${TAG%-v*}"                                  # diffdesk
+          VERSION="v${TAG##*-v}"                             # v0.7.0
+          URL="https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+          # Replace content between the per-tool markers in README.md
+          perl -0pi -e \
+            "s|<!-- latest:${TOOL} -->.*?<!-- /latest:${TOOL} -->|<!-- latest:${TOOL} -->[${VERSION}](${URL})<!-- /latest:${TOOL} -->|s" \
+            README.md
+
+      - name: Commit
+        run: |
+          git config user.name "toolbox-bot"
+          git config user.email "actions@github.com"
+          git add README.md
+          git diff --cached --quiet || git commit -m "index: ${{ github.event.release.tag_name }}"
+          git push

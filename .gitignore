@@ -1,0 +1,14 @@
+# Binaries never get committed — they go to GitHub Releases.
+*.dmg
+*.msi
+*.exe
+*.AppImage
+*.deb
+*.rpm
+*.pkg
+*.zip
+*.tar.gz
+*.app
+dist/
+assets/
+.DS_Store

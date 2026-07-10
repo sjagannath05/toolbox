@@ -1,0 +1,60 @@
+# Template: drop this job into a PRIVATE project repo's release workflow to
+# publish its binaries into the public sjagannath05/toolbox repo.
+#
+# Setup (once per private repo):
+#   1. Create a fine-grained PAT: GitHub → Settings → Developer settings →
+#      Fine-grained tokens. Repository access: ONLY sjagannath05/toolbox.
+#      Permissions: Contents = Read and write. 1-year expiry.
+#   2. In the private repo: Settings → Secrets → Actions → new secret
+#      TOOLBOX_TOKEN = that PAT.
+#   3. Set TOOL_NAME below (must match the folder name in toolbox).
+#
+# Tagging convention in the private repo: plain v0.7.0 tags.
+# The job re-publishes to toolbox as <tool>-v0.7.0.
+
+name: Publish to toolbox
+
+on:
+  release:
+    types: [published]   # fires when you publish a release in the private repo
+  workflow_dispatch:      # or run manually
+    inputs:
+      tag:
+        description: "Version tag to republish (e.g. v0.7.0)"
+        required: true
+
+env:
+  TOOL_NAME: diffdesk    # ← change per repo
+
+jobs:
+  publish-to-toolbox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          TAG="${{ github.event.release.tag_name || inputs.tag }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "public_tag=${TOOL_NAME}-${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets from this (private) repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p assets
+          gh release download "${{ steps.tag.outputs.tag }}" \
+            --repo "${{ github.repository }}" --dir assets
+
+      - name: Generate SHA256SUMS
+        run: |
+          cd assets && shasum -a 256 * > SHA256SUMS
+
+      - name: Publish to sjagannath05/toolbox
+        env:
+          GH_TOKEN: ${{ secrets.TOOLBOX_TOKEN }}
+        run: |
+          gh release create "${{ steps.tag.outputs.public_tag }}" \
+            --repo sjagannath05/toolbox \
+            --title "${TOOL_NAME} ${{ steps.tag.outputs.tag }}" \
+            --notes "${{ github.event.release.body || 'See changelog in the tool folder.' }}" \
+            assets/*
